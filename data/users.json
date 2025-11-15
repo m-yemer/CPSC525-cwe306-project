@@ -1,0 +1,93 @@
+[
+  {
+    "id": 1,
+    "username": "alice",
+    "password_hash": "41987f4da561443b7864a24e12144db62acead906bd642da94e85e3752a93e53",
+    "is_admin": true,
+    "created_at": "2025-10-24T16:10:32Z"
+  },
+  {
+    "id": 2,
+    "username": "bob",
+    "password_hash": "63fd8266514253d36f7ef20fbf6c7fa57a2aa3ab97351d3461b0ce7a7eb39c12",
+    "is_admin": false,
+    "created_at": "2025-10-24T16:10:32Z"
+  },
+  {
+    "id": 3,
+    "username": "matt",
+    "password_hash": "83f1cd713b0b363b074a28c2acfcb00786bba5a4114fc55d1a9150c25315fc6c",
+    "is_admin": false,
+    "created_at": "2025-10-26T23:05:06Z"
+  },
+  {
+    "id": 4,
+    "username": "gen_49006_0",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 5,
+    "username": "gen_49006_1",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 6,
+    "username": "gen_49006_2",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 7,
+    "username": "gen_49006_3",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 8,
+    "username": "gen_49006_4",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 9,
+    "username": "gen_49006_5",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 10,
+    "username": "gen_49006_6",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 11,
+    "username": "gen_49006_7",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 12,
+    "username": "gen_49006_8",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  },
+  {
+    "id": 13,
+    "username": "gen_49006_9",
+    "password_hash": "f9d58bf2af8ddfcee34735e7b20da512e5d3f4a31f977a20c44653fe44054113",
+    "is_admin": false,
+    "created_at": "2025-11-15T23:23:26Z"
+  }
+]
