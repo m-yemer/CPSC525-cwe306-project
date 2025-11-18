@@ -1,6 +1,6 @@
 # ToDo CLI App — CWE-306 Vulnerability
 
-This is a deliberately To-Do application created to demonstrate
+This is a deliberately ToDo application created to demonstrate
 CWE-306: Missing Authentication for Critical Function.
 
 ## What it does
@@ -13,5 +13,5 @@ CWE-306: Missing Authentication for Critical Function.
 
 ## Quick start
 1. Run the app from powershell:
-  python -m app.gui_vuln
-  python -m app.gui_fix
+  -python -m app.gui_vuln
+  -python -m app.gui_fix
