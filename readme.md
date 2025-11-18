@@ -13,5 +13,5 @@ CWE-306: Missing Authentication for Critical Function.
 
 ## Quick start
 1. Run the app from powershell:
-  -python -m app.gui_vuln
-  -python -m app.gui_fix
+python -m app.gui_vuln
+python -m app.gui_fix
