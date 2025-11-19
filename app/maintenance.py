@@ -35,7 +35,7 @@ def restore_backup(backup_path: str) -> bool:
     return True
 
 def stats() -> dict:
-
+    # show the basic info on the data base to admin
     users = storage.load_users() or []
     tasks_list = storage.load_tasks() or []
     by_user = {}
@@ -50,13 +50,13 @@ def stats() -> dict:
     }
 
 def generate_sample_data(add_users: int = 10, tasks_per_user: int = 10, password: str = "pw"):
-
+    # generate sample data (users and tasks) mainly just for demo purposes
     auth.init_default_users()
     base = storage.load_users() or []
     start = max((u.get("id", 0) for u in base), default=0) + 1
     created = []
     for i in range(add_users):
-        uname = f"gen_{int(time.time()) % 100000}_{i}"
+        uname = f"gen_{int(time.time())}_{i}"
         user = auth.register_user(uname, password, is_admin=False)
         if user:
             created.append(user)
