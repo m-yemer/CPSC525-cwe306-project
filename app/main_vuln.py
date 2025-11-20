@@ -30,13 +30,19 @@ def main_loop():
             else:
                 print("Login failed.")
 
-        # menue to register a new user
+        # menu to register a new user
         elif choice == "2":
             username = input("Choose username: ").strip()
             password = utils.prompt_hidden("Choose password: ")
-            u = auth.register_user(username, password)
+
+            if current_user and current_user.get("is_admin"):
+                is_admin_answer = input("Make this user admin? (y/N): ").strip().lower()
+                is_admin = is_admin_answer == "y"
+                u = auth.register_user(username, password, is_admin=is_admin)
+            else:
+                u = auth.register_user(username, password)
             if u:
-                print(f"Registered {username}")
+                print(f"Registered {username} (admin={u.get('is_admin', False)})")
             else:
                 print("Registration failed (username may exist).")
 

@@ -6,12 +6,13 @@ from typing import Optional
 
 from . import storage, auth, tasks
 
+# directories for the main data and backup data
 DATA_DIR = Path(storage.DATA_DIR)
 BACKUP_DIR = DATA_DIR / "backups"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
 def backup_data() -> Path:
-
+    # time stamped backup of user and tasks and logs
     ts = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
     target = BACKUP_DIR / f"backup_{ts}"
     target.mkdir(parents=True, exist_ok=True)
@@ -22,7 +23,7 @@ def backup_data() -> Path:
     return target
 
 def restore_backup(backup_path: str) -> bool:
-
+    #restore the data from a backup
     src = Path(backup_path)
     if not src.is_dir():
         src = BACKUP_DIR / backup_path
@@ -45,12 +46,11 @@ def stats() -> dict:
         by_user[owner] += 1
     return {
         "users": len(users),
-        "tasks": len(tasks_list),
-        "tasks_per_user_sample": dict(list(by_user.items())[:10])
+        "tasks": len(tasks_list)
     }
 
 def generate_sample_data(add_users: int = 10, tasks_per_user: int = 10, password: str = "pw"):
-    # generate sample data (users and tasks) mainly just for demo purposes
+    # generate sample data (users/password and tasks) mainly just for demo purposes
     auth.init_default_users()
     base = storage.load_users() or []
     start = max((u.get("id", 0) for u in base), default=0) + 1
@@ -67,7 +67,7 @@ def generate_sample_data(add_users: int = 10, tasks_per_user: int = 10, password
     return {"created_users": len(created), "created_tasks": len(created) * tasks_per_user}
 
 def menu(current_user: Optional[dict]):
-
+    # cli menu
     while True:
         print("\n=== MAINTENANCE ===")
         print("1) Show stats")
