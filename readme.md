@@ -14,10 +14,10 @@ This project implements a multi file task management (ToDo) application designed
 ---
 
 ## How to Run the Vulnerable Application
-The the 4 main files is located in the **`app/.` folder** of the `CPSC525-cwe306-project/.`project folder.
-There are two default users:
-**ADMIN**`Username: alice` `Password: alicpw`
-**STANDARD USER** `Username: bob` `Password: bobpw`
+The the 4 main files is located in the **`app/.` folder** of the `CPSC525-cwe306-project/.`project folder.<br />
+There are two default users:<br />
+**ADMIN**`Username: alice` `Password: alicpw`<br />
+**STANDARD USER** `Username: bob` `Password: bobpw`<br />
 
 ### CLI Version (Runs on Linux servers)
 ```bash
