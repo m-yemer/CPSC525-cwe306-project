@@ -14,7 +14,7 @@ This project implements a multi file task management (ToDo) application designed
 ---
 
 ## How to Run the Vulnerable Application
-The the 4 main files is located in the **add folder** of the project folder.
+The the 4 main files is located in the **`app/.` folder** of the `CPSC525-cwe306-project/.`project folder.
 
 ### CLI Version (Runs on Linux servers)
 ```bash
