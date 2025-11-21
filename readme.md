@@ -59,10 +59,10 @@ This script triggers the vulnerable `delete_all_tasks()` admin function without 
 ## Repository Contents
 
 - `app/` — main application package  
-  - `main_vuln.py` — vulnerable CLI; **run this for the CLI vulnerable app**
-  - `main_fix.py` — fixed CLI;**run this for the CLI fixed app**
-  - `gui_vuln.py` — vulnerable GUI; **run this for the GUI vulnerable app (requires Tkinter)**
-  - `gui_fix.py` — fixed GUI; **run this for the GUI fixed app (requires Tkinter)**
+  - `main_vuln.py` — vulnerable CLI   ;**run this for the CLI vulnerable app**
+  - `main_fix.py` — fixed CLI         ;**run this for the CLI fixed app**
+  - `gui_vuln.py` — vulnerable GUI    ;**run this for the GUI vulnerable app (requires Tkinter)**
+  - `gui_fix.py` — fixed GUI          ;**run this for the GUI fixed app (requires Tkinter)**
   - `auth.py` — authentication logic  
   - `tasks.py` — task CRUD logic  
   - `vulnerable.py` — CWE-306 vulnerable admin actions  
