@@ -30,7 +30,7 @@ python3 -m app.gui_vuln
 
 ## How to Run the Fixed Application
 
-### CLI Version
+### CLI Version (Runs on Linux servers)
 ```bash
 python3 -m app.main_fix
 ```
@@ -78,7 +78,7 @@ This script triggers the vulnerable `delete_all_tasks()` admin function without 
 ## Notes
 
 - All CLI versions work on departmental Linux servers.  
-- GUI versions should only be used on local systems with Python Tkinter support.  
+- GUI versions only works on systems with Python Tkinter support.  
 - All admin only features in the vulnerable version are intentionally left accessible to all users to demonstrate CWE-306.  
 
 ---
