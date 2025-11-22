@@ -29,6 +29,15 @@ def login(lbl):
         # error
         messagebox.showerror("Login", "Login failed")
 
+def logout():
+    # logout current user
+    global CURRENT_USER
+    if not CURRENT_USER:
+        return
+    uname = CURRENT_USER.get("username")
+    CURRENT_USER = None
+    messagebox.showinfo("Logout", f"User {uname} logged out.")
+
 def register():
     # register a new user
     username = simpledialog.askstring("Register", "Choose username:")
@@ -284,10 +293,29 @@ if __name__ == "__main__":
     user_lbl.grid(row=0, column=0, columnspan=2, sticky="w")
     set_user_label(user_lbl)
 
-    tk.Button(main_frame, text="Login", width=18, command=lambda: login(user_lbl)).grid(row=1, column=0, padx=4, pady=4)
-    tk.Button(main_frame, text="Register", width=18, command=register).grid(row=1, column=1, padx=4, pady=4)
-    tk.Button(main_frame, text="Admin Tools", width=18, command=admin_tools).grid(row=2, column=0, padx=4, pady=4)
-    tk.Button(main_frame, text="Use App", width=18, command=open_user_panel).grid(row=2, column=1, padx=4, pady=4)
-    tk.Button(main_frame, text="Quit", width=38, command=quit_app).grid(row=3, column=0, columnspan=2, pady=8)
+    def refresh_main_menu():
+        # remove all widgets except user label and rebuild the main menu
+        for widget in main_frame.winfo_children():
+            if widget != user_lbl:
+                widget.destroy()
+        set_user_label(user_lbl)
+
+        # show Login or Logout 
+        if not CURRENT_USER:
+            tk.Button(main_frame, text="Login", width=18, command=lambda: [login(user_lbl), refresh_main_menu()]).grid(row=1, column=0, padx=4, pady=4)
+        else:
+            tk.Button(main_frame, text="Logout", width=18, command=lambda: [logout(), refresh_main_menu()]).grid(row=1, column=0, padx=4, pady=4)
+
+
+        tk.Button(main_frame, text="Register", width=18, command=lambda: [register(), refresh_main_menu()]).grid(row=1, column=1, padx=4, pady=4)
+
+        # only show Admin Tools button if logged in user is admin
+        if CURRENT_USER and CURRENT_USER.get("is_admin"):
+            tk.Button(main_frame, text="Admin Tools", width=18, command=admin_tools).grid(row=2, column=0, padx=4, pady=4)
+
+        tk.Button(main_frame, text="Use App", width=18, command=open_user_panel).grid(row=2, column=1, padx=4, pady=4)
+        tk.Button(main_frame, text="Quit", width=38, command=quit_app).grid(row=3, column=0, columnspan=2, pady=8)
+
+    refresh_main_menu()
 
     root.mainloop()

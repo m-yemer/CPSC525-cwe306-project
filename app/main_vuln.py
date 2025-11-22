@@ -12,26 +12,47 @@ def main_loop():
     current_user = None
     while True:
         show_welcome()
+
+        # dynamic menu entries
+        entries = []
+        labels = {
+            "login": "Login",
+            "register": "Register",
+            "admin": "Admin Tools",
+            "use": "Use App (user features)",
+            "quit": "Quit",
+        }
+
+        entries.append("login")
+        entries.append("register")
+        # Only show admin tools if logged-in user is an admin (dynamic menu)
+        if current_user and current_user.get("is_admin"):
+            entries.append("admin")
+        entries.append("use")
+        entries.append("quit")
+
         print("Main Menu:")
-        print("1) Login")
-        print("2) Register")
-        print("3) Admin Tools")   # intentionally exposed to all since there is not authentification check to access
-        print("4) Use App (user features)")
-        print("5) Quit")
+        for i, e in enumerate(entries, start=1):
+            print(f"{i}) {labels[e]}")
+
         choice = input("> ").strip()
-        if choice == "1":
+        if not choice.isdigit() or int(choice) < 1 or int(choice) > len(entries):
+            print("Invalid choice. Try again.")
+            continue
+
+        action = entries[int(choice) - 1]
+
+        if action == "login":
             username = input("Username: ").strip()
             password = utils.prompt_hidden("Password: ")
             user = auth.login_user(username, password)
-            # attempt login
             if user:
                 print(f"Logged in as {user['username']}")
                 current_user = user
             else:
                 print("Login failed.")
 
-        # menu to register a new user
-        elif choice == "2":
+        elif action == "register":
             username = input("Choose username: ").strip()
             password = utils.prompt_hidden("Choose password: ")
 
@@ -46,12 +67,8 @@ def main_loop():
             else:
                 print("Registration failed (username may exist).")
 
-        #---------------------------------
-        # WEAKNESS HERE: No authentication required to access admin tools
-        #---------------------------------
-        elif choice == "3":
-            
-            # vulnerable access: admin tool menu accessible without auth
+        elif action == "admin":
+            # Admin tools (accessible only because menu only shows it for admins)
             while True:
                 print("\n=== ADMIN TOOLS ===")
                 print("1) Vulnerable admin menu")
@@ -59,30 +76,22 @@ def main_loop():
                 print("3) Back")
                 a = input("> ").strip()
 
-                #go to menu for all users to do list and users management
                 if a == "1":
                     vulnerable.admin_menu_interactive()
-
-                # allow any user to access maintenance menu
-                # can view personal tasks of all users and see logs
                 elif a == "2":
                     admin_override = {"id": 0, "username": "unauth", "is_admin": True}
                     maintenance.menu(admin_override)
-                
-                # go back to main menu
                 elif a == "3":
                     break
                 else:
                     print("Invalid choice.")
-        
-        # normal user menu
-        elif choice == "4":
+
+        elif action == "use":
             user_menu(current_user)
-        elif choice == "5":
+
+        elif action == "quit":
             print("Goodbye.")
             return
-        else:
-            print("Invalid choice. Try again.")
 
 def user_menu(current_user):
     # require login

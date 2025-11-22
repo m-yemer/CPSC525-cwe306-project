@@ -13,17 +13,39 @@ def main_loop():
     while True:
         # Show welcome message
         show_welcome()
+
+        # dynamic menu entries
+        entries = []
+        labels = {
+            "login": "Login",
+            "register": "Register",
+            "admin": "Admin Tools",
+            "use": "Use App (user features)",
+            "quit": "Quit",
+        }
+
+        entries.append("login")
+        entries.append("register")
+        # Only show Admin Tools when logged-in user is an admin
+        if current_user and current_user.get("is_admin"):
+            entries.append("admin")
+        entries.append("use")
+        entries.append("quit")
+
         print("Main Menu:")
-        print("1) Login")
-        print("2) Register")
-        print("3) Admin Tools")   # access requires authentication in this build
-        print("4) Use App (user features)")
-        print("5) Quit")
+        for i, e in enumerate(entries, start=1):
+            print(f"{i}) {labels[e]}")
+
         choice = input("> ").strip()
-        if choice == "1":
+        if not choice.isdigit() or int(choice) < 1 or int(choice) > len(entries):
+            print("Invalid choice. Try again.")
+            continue
+
+        action = entries[int(choice) - 1]
+
+        if action == "login":
             username = input("Username: ").strip()
             password = utils.prompt_hidden("Password: ")
-            # attempt login
             user = auth.login_user(username, password)
             if user:
                 print(f"Logged in as {user['username']}")
@@ -31,8 +53,7 @@ def main_loop():
             else:
                 print("Login failed.")
 
-        # menu to register a new user
-        elif choice == "2":
+        elif action == "register":
             username = input("Choose username: ").strip()
             password = utils.prompt_hidden("Choose password: ")
 
@@ -47,12 +68,8 @@ def main_loop():
             else:
                 print("Registration failed (username may exist).")
 
-
-        #---------------------------------
-        # FIXED HERE: Authentication required to access admin tools
-        #---------------------------------
-        elif choice == "3":
-            #require an authenticated admin before showing admin tools
+        elif action == "admin":
+            # require an authenticated admin before showing admin tools (menu shown only for admins)
             admin = current_user
             if not admin:
                 print("Admin authentication required.")
@@ -67,7 +84,6 @@ def main_loop():
             if not admin.get("is_admin"):
                 print("User is not an admin. Access denied.")
                 continue
-
 
             # if admin authenticated, show admin tools menu
             while True:
@@ -90,17 +106,13 @@ def main_loop():
                     break
                 else:
                     print("Invalid choice.")
-        
-        # menu for normal user operations
-        elif choice == "4":
+
+        elif action == "use":
             user_menu(current_user)
-        
-        # exit the app
-        elif choice == "5":
+
+        elif action == "quit":
             print("Goodbye.")
             return
-        else:
-            print("Invalid choice. Try again.")
 
 # user operations menu
 def user_menu(current_user):
