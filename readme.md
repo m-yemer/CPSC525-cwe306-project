@@ -15,7 +15,9 @@ This project implements a multi file task management (ToDo) application designed
 
 ## How to Run the Vulnerable Application
 The the 4 main files is located in the **`app/.` folder** of the `CPSC525-cwe306-project/.`  
+
 **ADMIN**`Username: alice` `Password: alicpw` 
+
 **STANDARD USER** `Username: bob` `Password: bobpw`  
 
 All of the following commands to run should be done in the root `CPSC525-cwe306-project/.` folder. 
