@@ -93,11 +93,6 @@ test
 
 ---
 
-## Notes
-
-- All CLI versions work on departmental Linux servers.  
-- GUI versions only works on systems with Python Tkinter support.  
-- All admin only features in the vulnerable version are intentionally left accessible to all users to demonstrate CWE-306.  
 
 ---
 
