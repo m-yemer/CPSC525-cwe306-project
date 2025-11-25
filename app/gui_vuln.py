@@ -85,7 +85,7 @@ def refresh_user_tasks():
     #refresh the task list for the current user
     # keep it clean and consistent for what user does
     global user_tasks_text
-    if not user_tasks_text:
+    if not user_tasks_text or not hasattr(user_tasks_text, 'winfo_exists') or not user_tasks_text.winfo_exists():
         return
     user_tasks_text.config(state=tk.NORMAL)
     user_tasks_text.delete("1.0", tk.END)
@@ -160,51 +160,66 @@ def delete_task():
     messagebox.showinfo("Delete", "Task deleted")
     refresh_user_tasks()
 
+from .session import AuthenticatedAdminSession
+
 def admin_tools():
-    # MAIN VULNERABILITY
-    # access to admin tools without authentification check
     global admin_win
+    admin_session = None
+    # authenticate admin before showing admin tools
+    if not CURRENT_USER or not CURRENT_USER.get("is_admin"):
+        username = simpledialog.askstring("Admin Auth", "Admin username:")
+        if not username:
+            return
+        password = simpledialog.askstring("Admin Auth", "Admin password:", show="*")
+        admin_session = auth.login_user(username, password, require_admin_session=True)
+        if not admin_session or not isinstance(admin_session, AuthenticatedAdminSession) or not admin_session.is_valid():
+            messagebox.showerror("Admin", "Authentication failed. Cannot open Admin Tools.")
+            return
+    else:
+        #already logged in as admin create session object
+        admin_session = AuthenticatedAdminSession(CURRENT_USER)
+
     if admin_win and tk.Toplevel.winfo_exists(admin_win):
+        # if admin window already open bring to front
         admin_win.lift()
         return
     admin_win = tk.Toplevel(root)
-    admin_win.title("Admin Tools ")
+    admin_win.title("Admin Tools")
     frm = tk.Frame(admin_win)
     frm.pack(padx=8, pady=8)
 
-    # matches CLI options
-    tk.Button(frm, text="1) Vulnerable admin menu", width=36, command=admin_menu).grid(row=0, column=0, padx=4, pady=4)
-    tk.Button(frm, text="2) Maintenance", width=36, command=lambda: open_maintenance_window({"id":0,"username":"unauth","is_admin":True})).grid(row=1, column=0, padx=4, pady=4)
+    tk.Button(frm, text="1) Admin menu", width=36, command=lambda: admin_menu(admin_session)).grid(row=0, column=0, padx=4, pady=4)
+    tk.Button(frm, text="2) Maintenance", width=36, command=lambda: open_maintenance_window(admin_session)).grid(row=1, column=0, padx=4, pady=4)
     tk.Button(frm, text="3) Back", width=36, command=admin_win.destroy).grid(row=2, column=0, padx=4, pady=8)
 
-def admin_menu():
-    #open admin window not authenitfication here
+def admin_menu(admin_session):
+    # authenticated admin menu
     sub = tk.Toplevel(root)
-    sub.title("=== ADMIN TOOLS ===")
+    sub.title("=== ADMIN TOOLS === (authenticated)")
     frame = tk.Frame(sub)
     frame.pack(padx=8, pady=8)
 
-    # area to show task list for option 2
     task_display = scrolledtext.ScrolledText(sub, width=80, height=20)
     task_display.pack(padx=8, pady=(4,8))
     task_display.config(state=tk.DISABLED)
 
     def do_delete_all():
-        # major vulnerability here
-        # just allow any user to delete the entire task database
         if not messagebox.askyesno("Confirm", "Delete ALL tasks for all users?"):
             return
-        # vulnerable delete
         try:
-            vulnerable.delete_all_tasks()
-            messagebox.showinfo("Admin", "All tasks deleted ")
+            # use fixed.delete_all_tasks_fixed for secure delete
+            from . import fixed
+            ok = fixed.delete_all_tasks_fixed(admin_session)
+            if ok:
+                messagebox.showinfo("Admin", "All tasks deleted ")
+            else:
+                messagebox.showerror("Admin", "Delete failed (not authorized)")
         except Exception as e:
             messagebox.showerror("Admin", f"Delete failed: {e}")
         refresh_user_tasks()
         refresh_view()
 
     def refresh_view():
-        # show all tasks in window
         tasks_all = storage.load_tasks() or []
         task_display.config(state=tk.NORMAL)
         task_display.delete("1.0", tk.END)
@@ -217,16 +232,15 @@ def admin_menu():
                 task_display.insert(tk.END, f"  created: {t.get('created_at','')}\n\n")
         task_display.config(state=tk.DISABLED)
 
-    tk.Button(frame, text="Delete ALL tasks ", width=36, fg="red", command=do_delete_all).grid(row=0, column=0, padx=4, pady=4)
+    tk.Button(frame, text="Delete ALL tasks (authorized)", width=36, fg="red", command=do_delete_all).grid(row=0, column=0, padx=4, pady=4)
     tk.Button(frame, text="View ALL tasks", width=36, command=refresh_view).grid(row=1, column=0, padx=4, pady=4)
     tk.Button(frame, text="Back", width=36, command=sub.destroy).grid(row=2, column=0, padx=4, pady=8)
 
-    # initial populate
     refresh_view()
 
 
 def open_maintenance_window(current_user):
-    # secondary authentification problem (CWE-306)
+    # secondary authentification problem (CWE306)
 
     win = tk.Toplevel(root)
     win.title("Maintenance")

@@ -1,5 +1,6 @@
 
 from . import storage, auth
+from .session import AuthenticatedAdminSession
 import time
 """
     This fixed version requires the user to be an admin before being
@@ -7,24 +8,15 @@ import time
 """
 
 def admin_menu_interactive():
-
     # require admin authentification to access admin tools
-    
-    # admin credentials prompt
     username = input("Admin username: ").strip()
     password = input("Admin password: ").strip()
 
-    # authenticate user
-    admin = auth.login_user(username, password)
-    if not admin:
-        #authenticate failed by invalid user or pssword
-        print("Authentication failed. Cannot access Admin Tools.")
+    # authenticate user and require admin session
+    admin_session = auth.login_user(username, password, require_admin_session=True)
+    if not admin_session or not isinstance(admin_session, AuthenticatedAdminSession) or not admin_session.is_valid():
+        print("Authentication failed or not authorized. Cannot access Admin Tools.")
         return
-    if not admin.get("is_admin"):
-        # user credntials not admin
-        print("User is not an admin. Access denied.")
-        return
-
 
     #Main admin menus
     while True:
@@ -32,11 +24,10 @@ def admin_menu_interactive():
         print("1) Delete ALL tasks ")
         print("2) View ALL tasks")
         print("3) Back")
-        choice = input("> ").strip() # get user chouce
-
+        choice = input("> ").strip() # get user choice
 
         if choice == "1":
-            ok = delete_all_tasks_fixed(admin) #attempt delete all
+            ok = delete_all_tasks_fixed(admin_session) #attempt delete all
             if ok:
                 print("All tasks deleted")
             else:
@@ -48,7 +39,6 @@ def admin_menu_interactive():
                 print("(no tasks)")
             else:
                 for t in all_tasks:
-                    #iterate and print tasks
                     print(f"- id={t['id']} owner={t['owner_id']} title={t['title']} created={t['created_at']}")
         elif choice == "3":
             return
@@ -56,14 +46,14 @@ def admin_menu_interactive():
             print("Invalid choice")
 
 
-def delete_all_tasks_fixed(admin):
-    #delete all tasks present in database
-    if not admin or not isinstance(admin, dict):
+def delete_all_tasks_fixed(admin_session):
+    # Only allow if admin_session is a real AuthenticatedAdminSession
+    if not admin_session or not isinstance(admin_session, AuthenticatedAdminSession):
         return False
-    if not admin.get("is_admin"):
+    if not admin_session.is_valid():
         return False
     storage.save_tasks([])
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    storage.append_audit(f"ADMIN_DELETE_ALL performed by admin id={admin.get('id')} time={now}")
+    storage.append_audit(f"ADMIN_DELETE_ALL performed by admin id={admin_session.id} time={now}")
     return True
 

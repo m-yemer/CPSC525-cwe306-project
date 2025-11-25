@@ -87,7 +87,7 @@ def open_user_panel():
 def refresh_user_tasks():
     # refresh the task display for the user
     global user_tasks_text
-    if not user_tasks_text:
+    if not user_tasks_text or not hasattr(user_tasks_text, 'winfo_exists') or not user_tasks_text.winfo_exists():
         return
     user_tasks_text.config(state=tk.NORMAL)
     user_tasks_text.delete("1.0", tk.END) # clear existing text
@@ -163,43 +163,42 @@ def delete_task():
     messagebox.showinfo("Delete", "Task deleted")
     refresh_user_tasks()
 
+# import authenticated admin session
+from .session import AuthenticatedAdminSession
+
 def admin_tools():
     global admin_win
-    # Authenticate admin first 
-    admin = CURRENT_USER
-    if not admin or not admin.get("is_admin"):
-        # if not already admin, request creadentials
+    # authenticate admin first
+    admin_session = None
+    if not CURRENT_USER or not CURRENT_USER.get("is_admin"):
         username = simpledialog.askstring("Admin Auth", "Admin username:")
         if not username:
             return
         password = simpledialog.askstring("Admin Auth", "Admin password:", show="*")
-        admin = auth.login_user(username, password) # authenticate user
-        if not admin:
-            # general fail
+        admin_session = auth.login_user(username, password, require_admin_session=True)
+        if not admin_session or not isinstance(admin_session, AuthenticatedAdminSession) or not admin_session.is_valid():
             messagebox.showerror("Admin", "Authentication failed. Cannot open Admin Tools.")
             return
-        if not admin.get("is_admin"):
-            # user credneital not belonging to admin
-            messagebox.showerror("Admin", "User is not an admin. Access denied.")
-            return
+    else:
+        #already logged in as admin create session object
+        admin_session = AuthenticatedAdminSession(CURRENT_USER)
 
     if admin_win and tk.Toplevel.winfo_exists(admin_win):
         admin_win.lift()
         return
     admin_win = tk.Toplevel(root)
-    admin_win.title("Admin Tools (Fixed - authenticated)")
+    admin_win.title("Admin Tools")
     frm = tk.Frame(admin_win)
     frm.pack(padx=8, pady=8)
 
     # button to open admin functions
     tk.Button(frm, text="1) Admin menu",
-               width=36, command=lambda: admin_menu(admin)).grid(row=0, column=0, padx=4, pady=4)
-    tk.Button(frm, text="2) Maintenance ", width=36, command=lambda: open_maintenance_window(admin)).grid(row=1, column=0, padx=4, pady=4)
+               width=36, command=lambda: admin_menu(admin_session)).grid(row=0, column=0, padx=4, pady=4)
+    tk.Button(frm, text="2) Maintenance ", width=36, command=lambda: open_maintenance_window(admin_session)).grid(row=1, column=0, padx=4, pady=4)
     tk.Button(frm, text="3) Back", width=36, command=admin_win.destroy).grid(row=2, column=0, padx=4, pady=8)
 
-def admin_menu(admin):
+def admin_menu(admin_session):
     # interactive admin menu for authenticated admin
-
     sub = tk.Toplevel(root)
     sub.title("=== ADMIN TOOLS === (authenticated)")
     frame = tk.Frame(sub)
@@ -210,20 +209,18 @@ def admin_menu(admin):
     task_display.config(state=tk.DISABLED)
 
     def do_delete_all_fixed():
-        # the main vulnerability here is fixed, only accessible if user account
         if not messagebox.askyesno("Confirm", "Delete ALL tasks for all users?"):
-
             return
         try:
             if hasattr(fixed, "delete_all_tasks_fixed"):
-                ok = fixed.delete_all_tasks_fixed(admin) # calls the fixed delete all tool, only works if user is an admin
+                ok = fixed.delete_all_tasks_fixed(admin_session)
                 if ok:
                     messagebox.showinfo("Admin", "All tasks deleted ")
                 else:
                     messagebox.showerror("Admin", "Delete failed (not authorized)")
             else:
                 storage.save_tasks([])
-                storage.append_audit(f"ADMIN_DELETE_ALL performed by admin id={admin['id']}")
+                storage.append_audit(f"ADMIN_DELETE_ALL performed by admin id={getattr(admin_session, 'id', '?')}")
                 messagebox.showinfo("Admin", "All tasks deleted (fixed fallback)")
         except Exception as e:
             messagebox.showerror("Admin", f"Delete failed: {e}")
@@ -231,7 +228,6 @@ def admin_menu(admin):
         refresh_view()
 
     def refresh_view():
-        # refresh task display
         tasks_all = storage.load_tasks() or []
         task_display.config(state=tk.NORMAL)
         task_display.delete("1.0", tk.END)

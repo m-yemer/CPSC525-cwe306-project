@@ -1,5 +1,6 @@
 from . import auth, tasks, vulnerable, storage, utils
 from . import maintenance
+from .session import AuthenticatedAdminSession
 
 def show_welcome():
     print("=================================================================")
@@ -10,6 +11,7 @@ def show_welcome():
 def main_loop():
     auth.init_default_users()
     current_user = None
+    admin_session = None
     while True:
         show_welcome()
 
@@ -25,9 +27,11 @@ def main_loop():
 
         entries.append("login")
         entries.append("register")
-        # Only show admin tools if logged-in user is an admin (dynamic menu)
+        # only show admin tools if logged in user is an admin 
         if current_user and current_user.get("is_admin"):
-            entries.append("admin")
+            # only show Admin Tools if we have a valid admin session
+            if admin_session and isinstance(admin_session, AuthenticatedAdminSession) and admin_session.is_valid():
+                entries.append("admin")
         entries.append("use")
         entries.append("quit")
 
@@ -42,6 +46,10 @@ def main_loop():
 
         action = entries[int(choice) - 1]
 
+        if action == "quit":
+            print("Exiting. Goodbye!")
+            break
+
         if action == "login":
             username = input("Username: ").strip()
             password = utils.prompt_hidden("Password: ")
@@ -49,6 +57,12 @@ def main_loop():
             if user:
                 print(f"Logged in as {user['username']}")
                 current_user = user
+                # if admin create session
+                if user.get("is_admin"):
+                    admin_session = AuthenticatedAdminSession(user)
+                else:
+                    admin_session = None
+                continue  # Show main menu again after login
             else:
                 print("Login failed.")
 
@@ -64,6 +78,7 @@ def main_loop():
                 u = auth.register_user(username, password)
             if u:
                 print(f"Registered {username} (admin={u.get('is_admin', False)})")
+                continue  # Show main menu again after registration
             else:
                 print("Registration failed (username may exist).")
 
@@ -85,24 +100,36 @@ def main_loop():
                     break
                 else:
                     print("Invalid choice.")
+            continue  # After admin tools, show main menu again
 
-        elif action == "use":
-            user_menu(current_user)
+        elif action == "admin":
+            # require a valid AuthenticatedAdminSession for admin tools
+            if not (admin_session and isinstance(admin_session, AuthenticatedAdminSession) and admin_session.is_valid()):
+                print("Admin authentication required.")
+                username = input("Admin username: ").strip()
+                password = utils.prompt_hidden("Admin password: ")
+                admin = auth.login_user(username, password)
+                if admin and admin.get("is_admin"):
+                    admin_session = AuthenticatedAdminSession(admin)
+                else:
+                    print("Admin authentication failed.")
+                    continue
+            # Admin tools (accessible only because menu only shows it for admins)
+            while True:
+                print("\n=== ADMIN TOOLS ===")
+                print("1) Vulnerable admin menu")
+                print("2) Maintenance ")
+                print("3) Back")
+                a = input("> ").strip()
 
-        elif action == "quit":
-            print("Goodbye.")
-            return
-
-def user_menu(current_user):
-    # require login
-    if not current_user:
-        print("You are not logged in. Please login or register first.")
-        return
-    
-    while True:
-        # print user menu ========== 
-        print(f"\nUser Menu — logged in as {current_user['username']}")
-        print("1) Create task")
+                if a == "1":
+                    vulnerable.admin_menu_interactive()
+                elif a == "2":
+                    maintenance.maintenance_menu()
+                elif a == "3":
+                    break
+                else:
+                    print("Invalid choice.")
         print("2) List my tasks")
         print("3) Complete my task")
         print("4) Edit my task")
@@ -196,7 +223,7 @@ def user_menu(current_user):
             current_user.clear()
             return
         elif choice == "7":
-            return
+            continue
         else:
             print("Invalid choice. Try again.")
 

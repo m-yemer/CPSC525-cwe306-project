@@ -2,7 +2,8 @@
 
 import hashlib
 import time
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
+from .session import AuthenticatedAdminSession
 from . import storage
 
 #password salt for hash
@@ -93,7 +94,7 @@ def verify_password(user: Dict, password: str) -> bool:
     # for login verify password provided matches hash stored
     return user.get("password_hash") == _hash_password(password)
 
-def login_user(username: str, password: str) -> Optional[Dict]:
+def login_user(username: str, password: str, require_admin_session: bool = False) -> Union[Dict, AuthenticatedAdminSession, None]:
     # authenticate username and password in login
     user = find_user_by_username(username)
     if not user: # no username exists
@@ -101,4 +102,6 @@ def login_user(username: str, password: str) -> Optional[Dict]:
     if not verify_password(user, password): # check password
         return None
     storage.append_audit(f"LOGIN: {username} id={user['id']}") # log sucess
+    if require_admin_session and user.get("is_admin"):
+        return AuthenticatedAdminSession(user)
     return user # return authenticated user
