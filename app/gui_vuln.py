@@ -1,335 +1,447 @@
-import tkinter as tk
-from tkinter import simpledialog, messagebox, scrolledtext
-from . import auth, tasks, vulnerable, storage, utils, maintenance
+'''
+Vulnerable GUI implementation - Comprehensive CWE-306 demonstration
+'''
 
-# global variables
+import tkinter as tk
+from tkinter import ttk, messagebox, simpledialog, scrolledtext
+from . import auth, tasks, storage, vulnerable, maintenance
+from .gui_styles import setup_styles, create_modern_frame, create_modern_button, COLORS
+from .gui_components import set_user_label, create_header, center_window, create_scrolled_text
+
+# Global variables
 CURRENT_USER = None
 user_win = None
 user_tasks_text = None
 admin_win = None
 
-def set_user_label(lbl):
-    # set user label header
-    lbl.config(text=f"User: {CURRENT_USER['username']}" if CURRENT_USER else "User: (not logged in)")
-
 def login(lbl):
-    # login dialog windows
+    """Vulnerable login - No proper session management"""
     global CURRENT_USER
-    username = simpledialog.askstring("Login", "Username:") # get username
+    username = simpledialog.askstring("Login", "Username:")
     if not username:
         return
-    password = simpledialog.askstring("Login", "Password:", show="*") # get password
-    user = auth.login_user(username, password) # authenticate
+    
+    password = simpledialog.askstring("Login", "Password:", show="*")
+    user = auth.login_user(username, password)
+    
     if user:
-        # sucess
         CURRENT_USER = user
-        set_user_label(lbl)
+        # VULNERABLE: No proper session validation
+        set_user_label(lbl, CURRENT_USER)
         messagebox.showinfo("Login", f"Logged in as {user['username']}")
+        refresh_main_menu()
     else:
-        # error
         messagebox.showerror("Login", "Login failed")
 
 def logout():
-    # logout current user
+    """Vulnerable logout - No session cleanup"""
     global CURRENT_USER
     if not CURRENT_USER:
         return
+    
     uname = CURRENT_USER.get("username")
     CURRENT_USER = None
     messagebox.showinfo("Logout", f"User {uname} logged out.")
+    refresh_main_menu()
 
 def register():
-    # register a new user
+    """Vulnerable registration - No input validation"""
     username = simpledialog.askstring("Register", "Choose username:")
     if not username:
         return
+    
     password = simpledialog.askstring("Register", "Choose password:", show="*")
     
-    if CURRENT_USER and CURRENT_USER.get("is_admin"):
-        # user can only make ne wuser admin if they are an admin 
-        # (wasnt sure if i should add this due to CWE306, but maintenance and
-        # admin tools probably enough for demo)
+    # VULNERABLE: Any user can create admin accounts
+    if CURRENT_USER:
         make_admin = messagebox.askyesno("Register", "Make this user admin?")
         u = auth.register_user(username, password, is_admin=make_admin)
     else:
-        # general user register
         u = auth.register_user(username, password)
+    
     if u:
-        #sucess
         messagebox.showinfo("Register", f"Registered {username}")
     else:
-        #failure
-        messagebox.showerror("Register", "Registration failed (username may exist)")
+        messagebox.showerror("Register", "Registration failed")
 
 def open_user_panel():
-    # open user panel window
+    """Vulnerable user panel - No access control"""
     global user_win, user_tasks_text
+    
     if user_win and tk.Toplevel.winfo_exists(user_win):
         user_win.lift()
         return
+    
     user_win = tk.Toplevel(root)
-    user_win.title("User Panel")
-    frm = tk.Frame(user_win)
-    frm.pack(padx=8, pady=8)
-
-    # buttons for user action
-    tk.Button(frm, text="Create Task", width=18, command=create_task).grid(row=0, column=0, padx=4, pady=4)
-    tk.Button(frm, text="Complete Task", width=18, command=complete_task).grid(row=0, column=1, padx=4, pady=4)
-    tk.Button(frm, text="Delete Task", width=18, command=delete_task).grid(row=1, column=0, padx=4, pady=4)
-    tk.Button(frm, text="Refresh Tasks", width=18, command=refresh_user_tasks).grid(row=1, column=1, padx=4, pady=4)
-    user_tasks_text = scrolledtext.ScrolledText(user_win, width=80, height=20)
-    user_tasks_text.pack(padx=8, pady=(4,8))
+    user_win.title("Task Manager - VULNERABLE")
+    user_win.geometry("800x600")
+    
+    # VULNERABLE: No authentication check
+    header_frame = create_header(user_win, "Task Manager - VULNERABLE", 
+                               "No proper access control")
+    
+    # Action buttons
+    button_frame = create_modern_frame(user_win, 10)
+    button_frame.pack(fill='x', padx=20, pady=(0, 10))
+    
+    create_modern_button(button_frame, "Create Task", create_task, 'Success.TButton', 15).grid(row=0, column=0, padx=5, pady=5)
+    create_modern_button(button_frame, "Complete Task", complete_task, 'Primary.TButton', 15).grid(row=0, column=1, padx=5, pady=5)
+    create_modern_button(button_frame, "Delete Task", delete_task, 'Danger.TButton', 15).grid(row=0, column=2, padx=5, pady=5)
+    create_modern_button(button_frame, "View ALL Tasks", view_all_tasks, 'Warning.TButton', 15).grid(row=0, column=3, padx=5, pady=5)
+    
+    # Tasks display
+    tasks_frame = create_modern_frame(user_win, 10)
+    tasks_frame.pack(fill='both', expand=True, padx=20, pady=10)
+    
+    ttk.Label(tasks_frame, text="Task Display:", font=('Arial', 12, 'bold')).pack(anchor='w')
+    
+    user_tasks_text = create_scrolled_text(tasks_frame)
+    user_tasks_text.pack(fill='both', expand=True, pady=(10, 0))
+    
     refresh_user_tasks()
 
 def refresh_user_tasks():
-    #refresh the task list for the current user
-    # keep it clean and consistent for what user does
+    """Vulnerable task refresh - Shows all tasks to everyone"""
     global user_tasks_text
-    if not user_tasks_text or not hasattr(user_tasks_text, 'winfo_exists') or not user_tasks_text.winfo_exists():
+    if not user_tasks_text:
         return
+        
     user_tasks_text.config(state=tk.NORMAL)
     user_tasks_text.delete("1.0", tk.END)
-    if not CURRENT_USER:
-        user_tasks_text.insert(tk.END, "(not logged in)\n")
+    
+    # VULNERABLE: Shows all tasks regardless of ownership
+    all_tasks = storage.load_tasks() or []
+    
+    if not all_tasks:
+        user_tasks_text.insert(tk.END, "No tasks in system\n")
     else:
-        my_tasks = tasks.list_tasks_for_user(CURRENT_USER["id"])
-        if not my_tasks:
-            user_tasks_text.insert(tk.END, "(no tasks)\n") # clear
-        else:
-            for t in my_tasks:
-                # format to display each task
-                user_tasks_text.insert(tk.END, f"id={t.get('id')}  title={t.get('title')}  done={t.get('done')}\n")
-                user_tasks_text.insert(tk.END, f"  desc: {t.get('description','')}\n")
-                user_tasks_text.insert(tk.END, f"  created: {t.get('created_at','')}\n\n")
+        user_tasks_text.insert(tk.END, "VULNERABLE: Viewing ALL tasks in system\n\n")
+        for t in all_tasks:
+            status = "DONE" if t.get("done") else "PENDING"
+            user_tasks_text.insert(tk.END, f"[{status}] Task #{t['id']} (Owner: {t['owner_id']}): {t['title']}\n")
+            if t.get('description'):
+                user_tasks_text.insert(tk.END, f"    Desc: {t['description']}\n")
+            user_tasks_text.insert(tk.END, f"    Created: {t['created_at']}\n\n")
+    
     user_tasks_text.config(state=tk.DISABLED)
 
 def create_task():
-    #allow user to add task
+    """Vulnerable task creation - No user validation"""
     if not CURRENT_USER:
-        messagebox.showwarning("Create", "Please login first")
-        return
-    # ask user to input required fields to save task
+        # VULNERABLE: Allows task creation without login
+        owner_id = simpledialog.askinteger("Create Task", "Enter any user ID to own this task:")
+        if owner_id is None:
+            return
+    else:
+        owner_id = CURRENT_USER["id"]
+    
     title = simpledialog.askstring("Create Task", "Title:")
     if title is None:
         return
+    
     desc = simpledialog.askstring("Create Task", "Description:")
-    t = tasks.add_task(CURRENT_USER["id"], title, desc or "")
-    messagebox.showinfo("Create", f"Created task id={t['id']}")
+    t = tasks.add_task(owner_id, title, desc or "")
+    
+    messagebox.showinfo("Create", f"Created task id={t['id']} for user {owner_id}")
     refresh_user_tasks()
 
 def complete_task():
-    # mark task as complete
-    if not CURRENT_USER:
-        messagebox.showwarning("Complete", "Please login first")
-        return
+    """Vulnerable task completion - No ownership check"""
     tid = simpledialog.askinteger("Complete Task", "Task id to mark complete:")
     if tid is None:
-        # tid doesnt exist
         return
+    
     t = tasks.get_task(tid)
     if not t:
         messagebox.showerror("Complete", "Task not found")
         return
-    if t["owner_id"] != CURRENT_USER["id"]:
-        # check user not owner
-        # again wasnt sure to authenticate or not here 
-        messagebox.showerror("Complete", "You are not the owner of this task")
-        return
+    
+    # VULNERABLE: No ownership validation
     tasks.update_task(tid, done=True)
-    messagebox.showinfo("Complete", "Task marked complete")
+    messagebox.showinfo("Complete", f"Task {tid} marked complete")
     refresh_user_tasks()
 
 def delete_task():
-    # delete individual task
-    if not CURRENT_USER:
-        messagebox.showwarning("Delete", "Please login first")
-        return
-    tid = simpledialog.askinteger("Delete Task", "Task id to delete:") # ask task id
+    """Vulnerable task deletion - No authorization"""
+    tid = simpledialog.askinteger("Delete Task", "Task id to delete:")
     if tid is None:
         return
+    
     t = tasks.get_task(tid)
     if not t:
-        # taks doesnt exist
         messagebox.showerror("Delete", "Task not found")
         return
-    if t["owner_id"] != CURRENT_USER["id"]:
-        # check user logged in is owner (not sure to authent)
-        messagebox.showerror("Delete", "You are not the owner of this task")
-        return
+    
+    # VULNERABLE: No ownership check
     tasks.delete_task(tid)
-    messagebox.showinfo("Delete", "Task deleted")
+    messagebox.showinfo("Delete", f"Task {tid} deleted")
     refresh_user_tasks()
 
-from .session import AuthenticatedAdminSession
+def view_all_tasks():
+    """Vulnerable: Explicitly show all tasks to any user"""
+    all_tasks = storage.load_tasks() or []
+    all_users = storage.load_users() or []
+    
+    view_win = tk.Toplevel(root)
+    view_win.title("ALL SYSTEM DATA - VULNERABLE")
+    view_win.geometry("900x700")
+    
+    text_area = scrolledtext.ScrolledText(view_win, width=100, height=35)
+    text_area.pack(fill='both', expand=True, padx=20, pady=20)
+    
+    content = "SECURITY VULNERABILITY: All System Data Exposed\n"
+    content += "=" * 60 + "\n\n"
+    
+    # Show all users
+    content += "ALL USERS:\n"
+    content += "-" * 30 + "\n"
+    for user in all_users:
+        content += f"ID: {user['id']} | Username: {user['username']} | Admin: {user.get('is_admin', False)}\n"
+    content += "\n"
+    
+    # Show all tasks
+    content += "ALL TASKS:\n"
+    content += "-" * 30 + "\n"
+    for task in all_tasks:
+        content += f"Task ID: {task['id']} | Owner: {task['owner_id']} | Title: {task['title']}\n"
+        if task.get('description'):
+            content += f"    Description: {task['description']}\n"
+        content += f"    Status: {'COMPLETED' if task.get('done') else 'PENDING'} | Created: {task['created_at']}\n\n"
+    
+    text_area.insert('1.0', content)
+    text_area.config(state='disabled')
+    
+    center_window(view_win)
 
 def admin_tools():
+    """Vulnerable admin tools - No authentication required"""
     global admin_win
-    admin_session = None
-    # authenticate admin before showing admin tools
-    if not CURRENT_USER or not CURRENT_USER.get("is_admin"):
-        username = simpledialog.askstring("Admin Auth", "Admin username:")
-        if not username:
-            return
-        password = simpledialog.askstring("Admin Auth", "Admin password:", show="*")
-        admin_session = auth.login_user(username, password, require_admin_session=True)
-        if not admin_session or not isinstance(admin_session, AuthenticatedAdminSession) or not admin_session.is_valid():
-            messagebox.showerror("Admin", "Authentication failed. Cannot open Admin Tools.")
-            return
-    else:
-        #already logged in as admin create session object
-        admin_session = AuthenticatedAdminSession(CURRENT_USER)
-
+    
     if admin_win and tk.Toplevel.winfo_exists(admin_win):
-        # if admin window already open bring to front
         admin_win.lift()
         return
+    
     admin_win = tk.Toplevel(root)
-    admin_win.title("Admin Tools")
-    frm = tk.Frame(admin_win)
-    frm.pack(padx=8, pady=8)
+    admin_win.title("Admin Tools - VULNERABLE")
+    admin_win.geometry("600x500")
+    
+    # VULNERABLE: No authentication check
+    header_frame = create_header(admin_win, "Admin Tools - VULNERABLE", 
+                               "NO AUTHENTICATION REQUIRED - CWE-306")
+    
+    # Security warning
+    warning_frame = create_modern_frame(admin_win, 15)
+    warning_frame.pack(fill='x', padx=40, pady=(0, 20))
+    
+    ttk.Label(warning_frame, text="⚠️  SECURITY VULNERABILITY", 
+             foreground='red', font=('Arial', 12, 'bold')).pack()
+    ttk.Label(warning_frame, text="Admin functions accessible without authentication", 
+             foreground='red', font=('Arial', 10)).pack()
+    
+    # Admin operations
+    content_frame = create_modern_frame(admin_win, 30)
+    content_frame.pack(fill='both', expand=True, padx=40, pady=20)
+    
+    create_modern_button(content_frame, "Delete ALL Tasks", 
+                       vulnerable_delete_all, 
+                       'Danger.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(content_frame, "View All User Data", 
+                       view_all_user_data, 
+                       'Warning.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(content_frame, "System Maintenance", 
+                       vulnerable_maintenance, 
+                       'Primary.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(content_frame, "Create Admin User", 
+                       create_admin_user, 
+                       'Success.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(content_frame, "Close", 
+                       admin_win.destroy, 
+                       'Secondary.TButton', 25).pack(fill='x', pady=8)
+    
+    center_window(admin_win)
 
-    tk.Button(frm, text="1) Admin menu", width=36, command=lambda: admin_menu(admin_session)).grid(row=0, column=0, padx=4, pady=4)
-    tk.Button(frm, text="2) Maintenance", width=36, command=lambda: open_maintenance_window(admin_session)).grid(row=1, column=0, padx=4, pady=4)
-    tk.Button(frm, text="3) Back", width=36, command=admin_win.destroy).grid(row=2, column=0, padx=4, pady=8)
-
-def admin_menu(admin_session):
-    # authenticated admin menu
-    sub = tk.Toplevel(root)
-    sub.title("=== ADMIN TOOLS === (authenticated)")
-    frame = tk.Frame(sub)
-    frame.pack(padx=8, pady=8)
-
-    task_display = scrolledtext.ScrolledText(sub, width=80, height=20)
-    task_display.pack(padx=8, pady=(4,8))
-    task_display.config(state=tk.DISABLED)
-
-    def do_delete_all():
-        if not messagebox.askyesno("Confirm", "Delete ALL tasks for all users?"):
-            return
-        try:
-            # use fixed.delete_all_tasks_fixed for secure delete
-            from . import fixed
-            ok = fixed.delete_all_tasks_fixed(admin_session)
-            if ok:
-                messagebox.showinfo("Admin", "All tasks deleted ")
-            else:
-                messagebox.showerror("Admin", "Delete failed (not authorized)")
-        except Exception as e:
-            messagebox.showerror("Admin", f"Delete failed: {e}")
+def vulnerable_delete_all():
+    """Vulnerable: Delete all tasks without authentication"""
+    if messagebox.askyesno("Delete All", 
+                          "VULNERABLE: This will delete ALL tasks without authentication!\n\n"
+                          "Continue?"):
+        vulnerable.delete_all_tasks()
+        messagebox.showinfo("Success", "All tasks deleted (VULNERABLE)")
         refresh_user_tasks()
-        refresh_view()
 
-    def refresh_view():
-        tasks_all = storage.load_tasks() or []
-        task_display.config(state=tk.NORMAL)
-        task_display.delete("1.0", tk.END)
-        if not tasks_all:
-            task_display.insert(tk.END, "(no tasks)\n")
-        else:
-            for t in tasks_all:
-                task_display.insert(tk.END, f"id={t.get('id')} owner={t.get('owner_id')} title={t.get('title')} done={t.get('done')}\n")
-                task_display.insert(tk.END, f"  desc: {t.get('description','')}\n")
-                task_display.insert(tk.END, f"  created: {t.get('created_at','')}\n\n")
-        task_display.config(state=tk.DISABLED)
+def view_all_user_data():
+    """Vulnerable: View detailed user data"""
+    users = storage.load_users() or []
+    all_tasks = storage.load_tasks() or []
+    
+    data_win = tk.Toplevel(root)
+    data_win.title("All User Data - VULNERABLE")
+    data_win.geometry("800x600")
+    
+    text_area = scrolledtext.ScrolledText(data_win, width=90, height=30)
+    text_area.pack(fill='both', expand=True, padx=20, pady=20)
+    
+    content = "VULNERABLE DATA ACCESS: All User Information\n"
+    content += "=" * 60 + "\n\n"
+    
+    for user in users:
+        user_tasks = [t for t in all_tasks if t['owner_id'] == user['id']]
+        completed = sum(1 for t in user_tasks if t.get('done'))
+        
+        content += f"USER: {user['username']}\n"
+        content += f"  ID: {user['id']} | Admin: {user.get('is_admin', False)}\n"
+        content += f"  Created: {user.get('created_at', 'Unknown')}\n"
+        content += f"  Tasks: {len(user_tasks)} (Completed: {completed})\n"
+        
+        if user_tasks:
+            content += "  Recent Tasks:\n"
+            for task in user_tasks[:5]:  # Show recent 5 tasks
+                status = "✓" if task.get('done') else "○"
+                content += f"    {status} {task['title']}\n"
+        content += "\n"
+    
+    text_area.insert('1.0', content)
+    text_area.config(state='disabled')
+    
+    center_window(data_win)
 
-    tk.Button(frame, text="Delete ALL tasks (authorized)", width=36, fg="red", command=do_delete_all).grid(row=0, column=0, padx=4, pady=4)
-    tk.Button(frame, text="View ALL tasks", width=36, command=refresh_view).grid(row=1, column=0, padx=4, pady=4)
-    tk.Button(frame, text="Back", width=36, command=sub.destroy).grid(row=2, column=0, padx=4, pady=8)
+def vulnerable_maintenance():
+    """Vulnerable maintenance - No admin check"""
+    # VULNERABLE: Any user can perform maintenance
+    choice = messagebox.askyesno("Maintenance", 
+                                "VULNERABLE: Maintenance functions available to all users\n\n"
+                                "Yes: Create backup\nNo: Generate sample data")
+    
+    if choice:
+        backup_path = maintenance.backup_data()
+        messagebox.showinfo("Backup", f"Backup created: {backup_path}")
+    else:
+        users = simpledialog.askinteger("Sample Data", "Users to create:", initialvalue=5)
+        if users:
+            tasks_per = simpledialog.askinteger("Sample Data", "Tasks per user:", initialvalue=3)
+            if tasks_per:
+                result = maintenance.generate_sample_data(users, tasks_per)
+                messagebox.showinfo("Sample Data", 
+                                  f"Created {result['created_users']} users and {result['created_tasks']} tasks")
 
-    refresh_view()
-
-
-def open_maintenance_window(current_user):
-    # secondary authentification problem (CWE306)
-
-    win = tk.Toplevel(root)
-    win.title("Maintenance")
-    frm = tk.Frame(win)
-    frm.pack(padx=8, pady=8)
-
-    out = scrolledtext.ScrolledText(win, width=80, height=16)
-    out.pack(padx=8, pady=(4,8))
-    out.config(state=tk.DISABLED)
-
-    def show_stats():
-        # any user can see the tasks of all other users
-        # privacy issue
-        s = maintenance.stats()
-        out.config(state=tk.NORMAL)
-        out.delete("1.0", tk.END)
-        out.insert(tk.END, f"{s}\n")
-        out.config(state=tk.DISABLED)
-
-    def do_backup():
-        # vulnerable GUI may allow backup without proper authentification
-        # can save other users task data
-        p = maintenance.backup_data()
-        messagebox.showinfo("Backup", f"Backup created: {p}")
-
-    def do_restore():
-        # can put their own backup with authentification
-        name = simpledialog.askstring("Restore", "Backup name or dir:")
-        if not name:
-            return
-        ok = maintenance.restore_backup(name)
-        messagebox.showinfo("Restore", "Restore succeeded." if ok else "Restore failed.")
-
-    def do_generate():
-        # in maintenance but technically for demo purposes
-        u = simpledialog.askstring("Generate", "Additional users to create (default 10):")
-        t = simpledialog.askstring("Generate", "Tasks per user (default 10):")
-        try:
-            nu = int(u) if u else 10
-            nt = int(t) if t else 10
-        except ValueError:
-            messagebox.showerror("Generate", "Invalid numbers")
-            return
-        res = maintenance.generate_sample_data(nu, nt)
-        messagebox.showinfo("Generate", f"Generated {res['created_users']} users and {res['created_tasks']} tasks.")
-
-    tk.Button(frm, text="Show stats", width=20, command=show_stats).grid(row=0, column=0, padx=4, pady=4)
-    tk.Button(frm, text="Backup data", width=20, command=do_backup).grid(row=0, column=1, padx=4, pady=4)
-    tk.Button(frm, text="Restore from backup", width=20, command=do_restore).grid(row=1, column=0, padx=4, pady=4)
-    tk.Button(frm, text="Generate sample data", width=20, command=do_generate).grid(row=1, column=1, padx=4, pady=4)
-    tk.Button(frm, text="Close", width=44, command=win.destroy).grid(row=2, column=0, columnspan=2, pady=8)
+def create_admin_user():
+    """Vulnerable: Create admin user without privileges"""
+    # VULNERABLE: Any user can create admin accounts
+    username = simpledialog.askstring("Create Admin", "Username for new admin:")
+    if username:
+        password = simpledialog.askstring("Create Admin", "Password:", show="*")
+        if password:
+            user = auth.register_user(username, password, is_admin=True)
+            if user:
+                messagebox.showinfo("Success", f"Admin user '{username}' created")
+            else:
+                messagebox.showerror("Error", "User creation failed")
 
 def quit_app():
-    root.destroy()
+    """Quit application"""
+    if messagebox.askokcancel("Quit", "Quit vulnerable TodoApp?"):
+        root.destroy()
+
+def refresh_main_menu():
+    """Refresh main menu"""
+    global main_frame, user_lbl
+    
+    for widget in main_frame.winfo_children():
+        if widget != user_lbl:
+            widget.destroy()
+    
+    set_user_label(user_lbl, CURRENT_USER)
+    
+    menu_frame = create_modern_frame(main_frame, 30)
+    menu_frame.pack(expand=True)
+    
+    # Security warning
+    warning_frame = create_modern_frame(menu_frame, 15)
+    warning_frame.pack(fill='x', pady=(0, 20))
+    
+    ttk.Label(warning_frame, text="⚠️  VULNERABLE VERSION", 
+             foreground='red', font=('Arial', 14, 'bold')).pack()
+    ttk.Label(warning_frame, text="CWE-306: Missing Authentication for Critical Function", 
+             foreground='red', font=('Arial', 10)).pack()
+    
+    # Menu buttons
+    if not CURRENT_USER:
+        create_modern_button(menu_frame, "Login", 
+                           lambda: login(user_lbl), 
+                           'Primary.TButton', 25).pack(fill='x', pady=8)
+    else:
+        create_modern_button(menu_frame, "Logout", 
+                           logout, 
+                           'Secondary.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(menu_frame, "Register", 
+                       register, 
+                       'Success.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(menu_frame, "Task Manager", 
+                       open_user_panel, 
+                       'Primary.TButton', 25).pack(fill='x', pady=8)
+    
+    # VULNERABLE: Admin tools always available
+    create_modern_button(menu_frame, "Admin Tools (VULNERABLE)", 
+                       admin_tools, 
+                       'Danger.TButton', 25).pack(fill='x', pady=8)
+    
+    create_modern_button(menu_frame, "Quit", 
+                       quit_app, 
+                       'Secondary.TButton', 25).pack(fill='x', pady=8)
+    
+    # Educational info
+    info_frame = create_modern_frame(menu_frame, 15)
+    info_frame.pack(fill='x', pady=(20, 0))
+    
+    ttk.Label(info_frame, text="Security Vulnerabilities Present:", 
+             font=('Arial', 10, 'bold')).pack()
+    ttk.Label(info_frame, text="• No admin authentication • View all user data • Modify any tasks", 
+             font=('Arial', 9)).pack()
+
+def initialize_vulnerable_app():
+    """Initialize vulnerable application"""
+    global root, main_container, main_frame, user_lbl
+    
+    root = tk.Tk()
+    root.title("TodoApp - Vulnerable GUI - CWE-306 Demo")
+    root.geometry("700x600")
+    root.minsize(600, 500)
+    
+    setup_styles()
+    
+    main_container = create_modern_frame(root, 0)
+    main_container.pack(fill='both', expand=True, padx=40, pady=30)
+    
+    # Header with vulnerability emphasis
+    header_frame = create_header(main_container, 
+                               "TodoApp - Vulnerable Version", 
+                               "CWE-306: Missing Authentication for Critical Function")
+    
+    # User status
+    user_section = create_modern_frame(main_container, 15)
+    user_section.pack(fill='x', pady=(0, 20))
+    
+    ttk.Label(user_section, text="Session Status", 
+             style='Header.TLabel').pack(anchor='w', pady=(0, 8))
+    
+    user_lbl = ttk.Label(user_section, text="User: Not logged in", 
+                        font=('Arial', 11))
+    user_lbl.pack(anchor='w')
+    
+    main_frame = create_modern_frame(main_container, 0)
+    main_frame.pack(fill='both', expand=True)
+    
+    refresh_main_menu()
+    center_window(root)
+    
+    return root
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("ToDo App — Vulnerable GUI")
-    main_frame = tk.Frame(root)
-    main_frame.pack(padx=10, pady=10)
-
-    # main menu buttons
-    user_lbl = tk.Label(main_frame, text="User: (not logged in)")
-    user_lbl.grid(row=0, column=0, columnspan=2, sticky="w")
-    set_user_label(user_lbl)
-
-    def refresh_main_menu():
-        # remove all widgets except user label and rebuild the main menu
-        for widget in main_frame.winfo_children():
-            if widget != user_lbl:
-                widget.destroy()
-        set_user_label(user_lbl)
-
-        # show Login or Logout 
-        if not CURRENT_USER:
-            tk.Button(main_frame, text="Login", width=18, command=lambda: [login(user_lbl), refresh_main_menu()]).grid(row=1, column=0, padx=4, pady=4)
-        else:
-            tk.Button(main_frame, text="Logout", width=18, command=lambda: [logout(), refresh_main_menu()]).grid(row=1, column=0, padx=4, pady=4)
-
-
-        tk.Button(main_frame, text="Register", width=18, command=lambda: [register(), refresh_main_menu()]).grid(row=1, column=1, padx=4, pady=4)
-
-        # only show Admin Tools button if logged in user is admin
-        if CURRENT_USER and CURRENT_USER.get("is_admin"):
-            tk.Button(main_frame, text="Admin Tools", width=18, command=admin_tools).grid(row=2, column=0, padx=4, pady=4)
-
-        tk.Button(main_frame, text="Use App", width=18, command=open_user_panel).grid(row=2, column=1, padx=4, pady=4)
-        tk.Button(main_frame, text="Quit", width=38, command=quit_app).grid(row=3, column=0, columnspan=2, pady=8)
-
-    refresh_main_menu()
-
-    root.mainloop()
+    app = initialize_vulnerable_app()
+    app.mainloop()
