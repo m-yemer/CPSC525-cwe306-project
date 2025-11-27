@@ -17,7 +17,7 @@ This project implements a multi file task management (ToDo) application designed
 The the 4 main files is located in the **`app/.` folder** of the `CPSC525-cwe306-project/.`  
 There are two default users present in the project given that have admin privilege and standard user privilege. 
 
-**ADMIN**`Username: alice` `Password: alicpw` 
+**ADMIN**`Username: alice` `Password: alicepw` 
 
 **STANDARD USER** `Username: bob` `Password: bobpw`  
 
