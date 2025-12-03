@@ -86,9 +86,10 @@ This script triggers the vulnerable `delete_all_tasks()` admin function without 
   - `utils.py` — terminal utilities  
 - `exploit_fix.py` - mainly just a sanity check to make sure the fixed function actually works 
 - `exploit.py` — exploit script that deletes all tasks without authentication; ; **run this for the exploit script of the vulnerability**
+- `test_cli_menus.py` — test script for CLI menu functionality
 - `data/` — users, tasks, audit logs  
 - `readme.md` — project documentation 
-test
+
 
 
 ---
