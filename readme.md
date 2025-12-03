@@ -12,8 +12,42 @@ This project implements a multi file task management (ToDo) application designed
 - CLI and GUI versions included (GUI not supported on Linux servers due to use of tinkter)
 
 ---
+# Running the GUI Remotely with SSH (X11 Forwarding)
 
-## Info on How to Run
+To run the GUI of this project from the university’s remote server on your own computer, we use **X11 forwarding**. This lets programs running on the server open windows directly on your local machine.
+
+## 1. Install an X11 Server (Windows)
+
+You need to install an X11 server:
+
+* **VcXsrv**: [https://sourceforge.net/projects/vcxsrv/](https://sourceforge.net/projects/vcxsrv/)
+
+After installing, start VcXsrv (the default **Multiple windows** option works fine).
+
+## 2. Set Your DISPLAY Variable
+
+ In PowerShell/Terminal, run:
+
+```powershell
+setx DISPLAY localhost:0.0
+```
+To display GUI on machine.
+
+## 3. SSH Into the Remote Server (with X11 Forwarding)
+
+Use SSH with the `-Y` option to turn on trusted X11 forwarding. Replace `<your-username>` with your actual UC username:
+
+```bash
+ssh -Y <your-username>@csx1.ucalgary.ca
+```
+
+Once connected, any GUI program you run on the server should show up on your computer through VcXsrv.
+
+---
+
+
+---
+# Info on How to Run the Applications
 The the 4 main files is located in the **`app/.` folder** of the `CPSC525-cwe306-project/.`  
 There are two default users present in the project given that have admin privilege and standard user privilege. 
 
