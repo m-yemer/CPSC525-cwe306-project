@@ -1,15 +1,19 @@
 # CWE-306 Vulnerable Task Management Application
 
-## High-Level Description of Exploit and Code
+## High-Level Description of CWE-306 Exploit and the Application Code
 
 This project implements a multi file task management (ToDo) application designed to demonstrate **CWE-306: Missing Authentication for Critical Function**, a vulnerability that occurs when sensitive administrative functionality is accessible without proper authentication. The application includes user registration, login, task creation, updates, and deletion, as well as administrative maintenance features such as backup, restore, and mass deletion of tasks. In the **vulnerable version**, the administrative function `delete_all_tasks()` can be triggered without requiring credentials, allowing any unprivileged user to erase the entire task database. The provided `exploit.py` script invokes this vulnerable function to demonstrate how an attacker can remove all existing tasks without logging in or without giving proper admin credentials. The fixed version of the application adds strict authentication checks before accessing the admin menu and performing admin operations, preventing the exploit and closing the CWE306 vulnerability.
+
+### How the Fixed Code Works
+
+The fixed version (`fixed.py`) mitigates CWE-306 by requiring authentication at the admin menu entry point and within critical functions. The `admin_menu_interactive()` function now prompts for admin credentials before granting access, and the `delete_all_tasks_fixed()` function validates an `AuthenticatedAdminSession` object through type checking and session validity verification. This multi-layered approach ensures that only properly authenticated administrators can access and execute sensitive operations. The vulnerable version's `delete_all_tasks()` had no such protections and could be called directly from anywhere without any credentials, as demonstrated by the exploit script.
 
 ### Bullet Summary
 - Task management system with login, registration, and administrative features  
 - Explicit CWE306 vulnerability: no authentication required for `delete_all_tasks()`  
 - Exploit script directly calls vulnerable function to wipe all tasks  
-- Fixed version restores proper authentication and role checks  
-- CLI and GUI versions included (GUI not supported on Linux servers due to use of tinkter)
+- Fixed version requires admin credentials at menu entry and validates `AuthenticatedAdminSession` in critical functions 
+- CLI and GUI versions included
 
 ---
 # Running the GUI Remotely with SSH (X11 Forwarding)
