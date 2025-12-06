@@ -26,7 +26,7 @@ You need to install an X11 server:
 
 * **VcXsrv**: [https://sourceforge.net/projects/vcxsrv/](https://sourceforge.net/projects/vcxsrv/)
 
-After installing, start VcXsrv (the default **Multiple windows** option works fine).
+After installing, start VcXsrv (the default **Multiple windows** is what we used).
 
 ## 2. Set Your DISPLAY Variable
 
