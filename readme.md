@@ -47,7 +47,7 @@ ssh -Y <your-username>@csx1.ucalgary.ca
 
 Once connected, any GUI program you run on the server should show up on your computer through VcXsrv.
 
----
+
 
 
 ---
